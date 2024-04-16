@@ -173,6 +173,11 @@ impl State {
             self.size = new_size;
             self.config.width = new_size.width;
             self.config.height = new_size.height;
+            self.queue.write_buffer(
+                &self.resolution_buffer,
+                0,
+                bytemuck::cast_slice(&[new_size.width as f32, new_size.height as f32]),
+            );
             self.surface.configure(&self.device, &self.config);
         }
     }
