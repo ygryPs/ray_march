@@ -11,10 +11,17 @@ fn vs_main(
 
 // Fragment shader
 
+const PI: f32 = 3.14159265;
+
+@group(0) @binding(0)
+var<uniform> u_resolution: vec2f;
+
 @fragment
 fn fs_main(@builtin(position) in_coord: vec4f) -> @location(0) vec4f {
-    let r = (-cos(in_coord.x * 0.01) + 1.0) * 0.5;
-    let g = (-cos(in_coord.y * 0.005) + 1.0) * 0.5;
+    let uv: vec2f = (2.0 * in_coord.xy - u_resolution.xy) / u_resolution.y;
+
+    let r = (cos(PI * uv.x) + 1.0) * 0.5;
+    let g = (cos(PI * uv.y) + 1.0) * 0.5;
     let b = 0.0;
     return vec4f(r, g, b, 1.0);
 }
