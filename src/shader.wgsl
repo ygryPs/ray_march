@@ -13,6 +13,11 @@ fn vs_main(
 
 const PI: f32 = 3.14159265;
 
+const FOCAL_LENGTH = 1.0;
+const MAX_LOOP_COUNT = 256;
+const MAX_DISTANCE = 1000.0;
+const EPSILON = 0.001;
+
 @group(0) @binding(0)
 var<uniform> u_resolution: vec2f;
 
@@ -20,8 +25,37 @@ var<uniform> u_resolution: vec2f;
 fn fs_main(@builtin(position) in_coord: vec4f) -> @location(0) vec4f {
     let uv: vec2f = (2.0 * in_coord.xy - u_resolution.xy) / u_resolution.y;
 
-    let r = (cos(PI * uv.x) + 1.0) * 0.5;
-    let g = (cos(PI * uv.y) + 1.0) * 0.5;
-    let b = 0.0;
-    return vec4f(r, g, b, 1.0);
+    let op = vec3f(0., 0., -3.);
+    let rd = normalize(vec3f(uv.x, uv.y, FOCAL_LENGTH));
+
+    var out: vec3f;
+    if ray_march(op, rd) {
+        out = vec3f(1.0, 1.0, 1.0);
+    } else {
+        out = vec3f(0.0, 0.0, 0.0);
+    }
+    return vec4f(out, 1.0);
+}
+
+fn ray_march(op: vec3f, rd: vec3f) -> bool {
+    var dis = 0.0;
+    for (var i = 0; i < MAX_LOOP_COUNT; i++) {
+        let hit = map(op + dis * rd);
+        if hit < EPSILON {
+            return true;
+        }
+        dis += hit;
+        if dis > MAX_DISTANCE {
+            break;
+        }
+    }
+    return false;
+}
+
+fn map(p: vec3f) -> f32 {
+    return ball(p, vec3f(0., 0., 0.), 1.);
+}
+
+fn ball(p: vec3f, c: vec3f, r: f32) -> f32 {
+    return length(p - c) - r;
 }
