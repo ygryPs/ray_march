@@ -27,29 +27,35 @@ fn fs_main(@builtin(position) in_coord: vec4f) -> @location(0) vec4f {
 
     let op = vec3f(0., 0., -3.);
     let rd = normalize(vec3f(uv.x, uv.y, FOCAL_LENGTH));
-
-    var out: vec3f;
-    if ray_march(op, rd) {
-        out = vec3f(1.0, 1.0, 1.0);
-    } else {
-        out = vec3f(0.0, 0.0, 0.0);
-    }
+    let p = ray_march(op, rd);
+    
+    let out = shade(p);
     return vec4f(out, 1.0);
 }
 
-fn ray_march(op: vec3f, rd: vec3f) -> bool {
+fn shade(p: vec3f) -> vec3f {
+    var color: vec3f;
+    if map(p) < EPSILON {
+        color = vec3f(1.0, 1.0, 1.0);
+    } else {
+        color = vec3f(0.0, 0.0, 0.0);
+    }
+    return color;
+}
+
+fn ray_march(op: vec3f, rd: vec3f) -> vec3f {
     var dis = 0.0;
     for (var i = 0; i < MAX_LOOP_COUNT; i++) {
         let hit = map(op + dis * rd);
         if hit < EPSILON {
-            return true;
+            break;
         }
         dis += hit;
         if dis > MAX_DISTANCE {
             break;
         }
     }
-    return false;
+    return op + dis * rd;
 }
 
 fn map(p: vec3f) -> f32 {
