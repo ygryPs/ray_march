@@ -18,17 +18,28 @@ const MAX_LOOP_COUNT = 256;
 const MAX_DISTANCE = 1000.0;
 const EPSILON = 0.001;
 
-const LIGHT_POS = vec3f(10.0, -30.0, -20.0);
+const LIGHT_POS = vec3f(10.0, 30.0, -20.0);
+
+const CAM_POS = vec3f(-2., 5., -5.);
+const ROT_X = 30. * PI / 180.;
+const ROT_Y = -30. * PI / 180.;
 
 @group(0) @binding(0)
 var<uniform> u_resolution: vec2f;
 
 @fragment
 fn fs_main(@builtin(position) in_coord: vec4f) -> @location(0) vec4f {
-    let uv: vec2f = (2.0 * in_coord.xy - u_resolution.xy) / u_resolution.y;
+    let CAMERA_TRANSFORM = mat3x3f(
+        cos(ROT_Y), 0., sin(ROT_Y),
+        -sin(ROT_X)*sin(ROT_Y), cos(ROT_X), sin(ROT_X)*cos(ROT_Y),
+        -cos(ROT_X)*sin(ROT_Y), -sin(ROT_X), cos(ROT_X)*cos(ROT_Y),
+    );
 
-    let op = vec3f(0., 0., -3.);
-    let rd = normalize(vec3f(uv.x, uv.y, FOCAL_LENGTH));
+    var uv: vec2f = (2.0 * in_coord.xy - u_resolution.xy) / u_resolution.y;
+    uv.y = -uv.y;
+
+    let op = CAM_POS;
+    let rd = CAMERA_TRANSFORM * normalize(vec3f(uv.x, uv.y, FOCAL_LENGTH));
     let p = ray_march(op, rd);
 
     let out = shade(p);
@@ -71,9 +82,17 @@ fn ray_march(op: vec3f, rd: vec3f) -> vec3f {
 }
 
 fn map(p: vec3f) -> f32 {
-    return ball(p, vec3f(0., 0., 0.), 1.);
+    var res: f32;
+    res = p.y;
+    res = min(res, sdSphere(p-vec3f(0., 1., 0.), 1.));
+    res = min(res, sdSphere(p-vec3f(0., 1., 2.), 1.));
+    res = min(res, sdSphere(p-vec3f(2., 1., 0.), 1.));
+    res = min(res, sdSphere(p-vec3f(2., 1., 2.), 1.));
+    res = min(res, sdSphere(p-vec3f(1., 2.42, 1.), 1.));
+    return res;
 }
 
-fn ball(p: vec3f, c: vec3f, r: f32) -> f32 {
-    return length(p - c) - r;
+fn sdSphere( p: vec3f, s: f32 ) -> f32
+{
+    return length(p)-s;
 }
