@@ -13,7 +13,7 @@ fn vs_main(
 
 const PI: f32 = 3.14159265;
 
-const FOCAL_LENGTH = 1.0;
+const FOCAL_LENGTH = 1.5;
 const MAX_LOOP_COUNT = 256;
 const MAX_DISTANCE = 1000.0;
 const EPSILON = 0.001;
@@ -23,6 +23,8 @@ const LIGHT_POS = vec3f(10.0, 30.0, -20.0);
 const CAM_POS = vec3f(-2., 5., -5.);
 const ROT_X = 30. * PI / 180.;
 const ROT_Y = -30. * PI / 180.;
+
+const BLEND = .3;
 
 @group(0) @binding(0)
 var<uniform> u_resolution: vec2f;
@@ -84,12 +86,19 @@ fn ray_march(op: vec3f, rd: vec3f) -> vec3f {
 fn map(p: vec3f) -> f32 {
     var res: f32;
     res = p.y;
-    res = min(res, sdSphere(p-vec3f(0., 1., 0.), 1.));
-    res = min(res, sdSphere(p-vec3f(0., 1., 2.), 1.));
-    res = min(res, sdSphere(p-vec3f(2., 1., 0.), 1.));
-    res = min(res, sdSphere(p-vec3f(2., 1., 2.), 1.));
-    res = min(res, sdSphere(p-vec3f(1., 2.42, 1.), 1.));
+    res = smin(res, sdSphere(p-vec3f(0., 1., 0.), 1.), BLEND);
+    res = smin(res, sdSphere(p-vec3f(0., 1., 2.), 1.), BLEND);
+    res = smin(res, sdSphere(p-vec3f(2., 1., 0.), 1.), BLEND);
+    res = smin(res, sdSphere(p-vec3f(2., 1., 2.), 1.), BLEND);
+    res = smin(res, sdSphere(p-vec3f(1., 2.42, 1.), 1.), BLEND);
     return res;
+}
+
+// exponential
+fn smin( a: f32, b: f32, k: f32 ) -> f32
+{
+    let r: f32 = exp2(-a/k) + exp2(-b/k);
+    return -k*log2(r);
 }
 
 fn sdSphere( p: vec3f, s: f32 ) -> f32
